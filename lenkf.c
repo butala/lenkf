@@ -104,25 +104,26 @@ static void TOC_MU_TU(const int clock_index);
 
 /******************************************************************************/
 
-/* See Algorithm 1.2.3 in Golub and van Loan */
+/* See Algorithm 1.2.3 in Golub and van Loan 3rd and 4th editions:
+ * Symmetric storage Gaxpy */
 static void compute_P_HT(arg_bundle *ab, const sparse_rcs *H,
 			 const int row_H, const char name_H,
 			 const int n_rows) {
   int i, j_index, j;
   elem edot_ij, C_v;
   edot_table *table;
-  
+
   const ensemble *e = ab->e;
   sb_toe_r_it *C_it = ab->C_it;
   const int N = ab->config->N;
-  
+
   vector *H_P_col;
   sparse_lil *P_HT;
   sparse_rcs *P_HT_rcs;
-  
+
 
   TIC(1);
-  
+
   assert(H);
   assert(row_H >= 0 && row_H + n_rows - 1 < H->m);
 
@@ -133,18 +134,18 @@ static void compute_P_HT(arg_bundle *ab, const sparse_rcs *H,
   if (ab->P_HT) {
     sparse_lil_destroy(&ab->P_HT);
   }
-   
+
   P_HT = ab->P_HT = sparse_lil_create(N, n_rows);
   H_P_col = vector_create(ab->config->N);
-  
+
   for (i = row_H; i < row_H + n_rows; i++) {
     vector_set0(H_P_col);
-    
+
     for (j_index = H->r[i]; j_index < H->r[i+1]; j_index++) {
       j = H->j[j_index];
 
       sb_toe_r_nz_it_init(C_it, j);
-      
+
       while (sb_toe_r_nz_it_has_next(C_it)) {
 	C_v = sb_toe_r_nz_it_next(C_it);
 
@@ -169,13 +170,13 @@ static void compute_P_HT(arg_bundle *ab, const sparse_rcs *H,
   }
 
   vector_destroy(&H_P_col);
-  
+
   TIC(2);
   edot_table_destroy(&table);
   TOC(2);
 
   sparse_lil_scal(P_HT, ((elem) 1)/(e->L - 1));
-  
+
   if (LENKF_DEBUG) {
     fprintf(LENKF_DEBUG_FID, "\nP_%cT:\n", name_H);
     P_HT_rcs = sparse_lil_2_rcs(P_HT);
@@ -191,23 +192,23 @@ static void compute_H_P_HT(arg_bundle *ab, const sparse_rcs *H,
 			   const int row_H, const char name_H,
 			   const int n_rows) {
   int i, j_index, j;
-  
+
   full_c *B = ab->B;
 
   sparse_lil *P_HT = ab->P_HT;
   sparse_lil_row_it P_HT_it;
   elem H_v, P_HT_v;
-  
+
   TIC(3);
-  
+
   assert(H);
   assert(row_H >= 0 && row_H + n_rows - 1 < H->m);
   assert(B->m == B->n);
   assert(B->m == ab->config->M_block);
   assert(P_HT);
-  
+
   full_c_set0(B);
-  
+
   for (i = row_H; i < row_H + n_rows; i++) {
     for (j_index = H->r[i]; j_index < H->r[i+1]; j_index++) {
       H_v = H->v[j_index];
@@ -221,7 +222,7 @@ static void compute_H_P_HT(arg_bundle *ab, const sparse_rcs *H,
 	if (P_HT_it.j < i - row_H) {
 	  continue;
 	}
-	
+
 	/* Matrix indexed in [j][i] because it is stored column-major */
   	B->v[P_HT_it.j][i-row_H] += H_v * P_HT_v;
       }
@@ -235,17 +236,17 @@ static void compute_H_P_HT(arg_bundle *ab, const sparse_rcs *H,
 
   TOC(3);
 }
- 
+
 
 static void compute_H_P_HT_plus_R(arg_bundle *ab,
 				  const elem *R_sqrt, const int inc_R_sqrt,
 				  const char name_H, const int n_rows) {
   int i, index_B;
-  
+
   full_c *B = ab->B;
 
   TIC(4);
-  
+
   index_B = 0;
   for (i = 0; i < n_rows; i++) {
     B->v[i][i] += R_sqrt[i*inc_R_sqrt] * R_sqrt[i*inc_R_sqrt];
@@ -268,7 +269,7 @@ static void compute_V(arg_bundle *ab, const elem *R_sqrt, const int inc_R_sqrt,
   full_c *E = ab->E;
 
   TIC(5);
-  
+
   for (l = 0; l < config->L; l++) {
     /* Matrix element indexed in [j][i] order because the E matrix is
        stored column-wise */
@@ -288,13 +289,13 @@ static void compute_V_minus_H_X(arg_bundle *ab, const sparse_rcs *H,
 				const int row_H, const char name_H,
 				const int n_rows) {
   int i, index_H;
-  
+
   const lenkf_config *config = ab->config;
   const full_r *X = ab->e->X;
   full_c *E = ab->E;
 
   TIC(6);
-  
+
   assert(H);
   assert(row_H >= 0 && row_H + n_rows - 1 < H->m);
   assert(E->m >= n_rows);
@@ -321,16 +322,16 @@ static void compute_V_minus_H_X(arg_bundle *ab, const sparse_rcs *H,
 
 static void compute_chol_B(arg_bundle *ab, const int n_rows) {
   int r;
-  
+
   full_c *B = ab->B;
-  
+
   TIC(7);
-  
+
   assert(n_rows <= B->n);
 
   r = epotrf(CblasColMajor, CblasUpper, n_rows, B->v_vector, B->n);
   assert(r == 0);
-  
+
   if (LENKF_DEBUG) {
     fprintf(LENKF_DEBUG_FID, "\nchol(B):\n");
     full_c_submatrix_fprintf(LENKF_DEBUG_FID, B, n_rows, n_rows);
@@ -342,12 +343,12 @@ static void compute_chol_B(arg_bundle *ab, const int n_rows) {
 
 static void compute_B_rdiv_E(arg_bundle *ab, const int n_rows) {
   int r;
-  
+
   const full_c *B = ab->B;
   full_c *E = ab->E;
 
   TIC(8);
-  
+
   assert(n_rows <= B->n);
 
   r = epotrs(CblasColMajor, CblasUpper, n_rows, E->n,
@@ -358,7 +359,7 @@ static void compute_B_rdiv_E(arg_bundle *ab, const int n_rows) {
     fprintf(LENKF_DEBUG_FID, "\nB\\E:\n");
     full_c_rows_fprintf(LENKF_DEBUG_FID, E, 0, n_rows-1);
   }
-  
+
   TOC(8);
 }
 
@@ -366,15 +367,15 @@ static void compute_B_rdiv_E(arg_bundle *ab, const int n_rows) {
 static void compute_e(arg_bundle *ab, const sparse_rcs *H, int row_H,
 		      const int n_rows, const elem *y, const int inc_y) {
   int row, index_H, row2;
-  
+
   const vector *x_mean = ab->x_mean;
   vector *scratch  = ab->scratch;
 
   TIC(9);
-  
+
   assert(H);
   assert(row_H >= 0 && row_H + n_rows - 1 < H->m);
-  
+
   /* Otherwise scratch will not be large enough */
   assert(n_rows <= ab->config->N);
 
@@ -391,7 +392,7 @@ static void compute_e(arg_bundle *ab, const sparse_rcs *H, int row_H,
       scratch->v[row - row_H] -= H->v[index_H] * x_mean->v[row2];
     }
   }
-  
+
   if (LENKF_DEBUG) {
     fprintf(LENKF_DEBUG_FID, "\ne:\n");
     vector_fnprintf(LENKF_DEBUG_FID, scratch, n_rows);
@@ -403,7 +404,7 @@ static void compute_e(arg_bundle *ab, const sparse_rcs *H, int row_H,
 
 static void compute_B_rdiv_e(arg_bundle *ab, const int n_rows) {
   int r;
-  
+
   const full_c *B = ab->B;
   const vector *scratch = ab->scratch;
   elem *e = ab->scratch->v;
@@ -412,7 +413,7 @@ static void compute_B_rdiv_e(arg_bundle *ab, const int n_rows) {
 
   r = epotrs(CblasColMajor, CblasUpper, n_rows, 1, B->v_vector,
 	     B->n, e, n_rows);
-  
+
   assert(r == 0);
 
   if (LENKF_DEBUG) {
@@ -431,11 +432,11 @@ static void compute_X_update(arg_bundle *ab) {
   sparse_lil *P_HT = ab->P_HT;
   const full_c *E = ab->E;
   vector *x_mean = ab->x_mean;
-  
+
   full_r *X = ab->e->X;
   sparse_lil_row_it P_HT_it;
   elem P_HT_v;
-  
+
   TIC(11);
 
   for (i = 0; i < P_HT->m; i++) {
@@ -453,7 +454,7 @@ static void compute_X_update(arg_bundle *ab) {
       }
     }
   }
-  
+
   if (LENKF_DEBUG) {
     fprintf(LENKF_DEBUG_FID, "\nX:\n");
     full_r_fprintf(LENKF_DEBUG_FID, X);
@@ -473,7 +474,7 @@ static void compute_x_mean_update(arg_bundle *ab) {
 
   sparse_lil_row_it P_HT_it;
   elem P_HT_v;
-  
+
   TIC(12);
 
 
@@ -490,7 +491,7 @@ static void compute_x_mean_update(arg_bundle *ab) {
       }
     }
   }
-  
+
   if (LENKF_DEBUG) {
     fprintf(LENKF_DEBUG_FID, "\nx_mean:\n");
     vector_fprintf(LENKF_DEBUG_FID, x_mean);
@@ -516,14 +517,14 @@ static void compute_measurement_update(arg_bundle *ab,
   assert(y);
   assert(R_sqrt);
 
-  
+
   assert(row_H >= 0 && row_H < H->m);
 
   TIC_MU_TU(0);
   /* No longer subtracting mean at each measurment update */
   /*ensemble_mean(e, scratch);
     ensemble_subtract_mean(e, scratch);*/
-  
+
   if (LENKF_DEBUG) {
     fprintf(LENKF_DEBUG_FID, "\n--------------------------------------------------------------------------------\n");
     fprintf(LENKF_DEBUG_FID, "i = %d\trow_%c = %d\tn_rows = %d\n",
@@ -569,9 +570,9 @@ static void compute_trace(arg_bundle *ab, int i) {
   ensemble *e = ab->e;
   vector *trace = ab->trace;
   vector *scratch = ab->scratch;
-  
+
   assert(i >= 0 && i < config->T);
-  
+
   if (config->save_trace) {
       ensemble_mean(e, scratch);
       ensemble_subtract_mean(e, scratch);
@@ -598,7 +599,7 @@ static void compute_time_update(arg_bundle *ab) {
     vector_copy(ab->scratch, ab->x_mean);
     sparse_rcs_mvm(ab->F, ab->scratch, ab->x_mean);
   }
-  
+
   /* Time update */
   ensemble_add_state_noise_wrapper(ab);
 
@@ -639,7 +640,7 @@ double compute_time_per_iter(const struct timeval *start,
 double time_elapsed(const struct timeval *start,
                     const struct timeval *current) {
   struct timeval elapsed;
-  
+
   assert(start);
   assert(current);
 
@@ -667,7 +668,7 @@ void printf_time_info(const struct timeval *start_time,
   struct timeval current_time;
   double time_per_iter;
   unsigned int l;
-  
+
   sprintf(buffer, "%i of %i", i, N_steps-1);
   sprintf(out_buffer, "%-16s", buffer);
   if (i > 0) {
@@ -684,7 +685,7 @@ void printf_time_info(const struct timeval *start_time,
     fflush(stamp_fid);
     strcat(out_buffer, buffer);
   }
-  
+
   if (!LENKF_DEBUG) {
     if (*buffer_strlen > 0) {
       for (l = 0; l < *buffer_strlen; l++) {
@@ -746,7 +747,7 @@ void ensemble_add_state_noise_wrapper(arg_bundle *ab) {
       return;
     }
   }
-    
+
   if (ab->config->randn_conv) {
     ensemble_add_noise_conv_ab(ab, ab->Q_sqrt.filter);
   }
@@ -779,16 +780,16 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
   arg_bundle *ab;
   int i, row, n_rows;
   elem zero = 0, inv_sqrt_lambda = ((elem) 1) / sqrte(config->lambda);
-  
+
   struct timeval start_time, current_time;
   time_t current_time_time_t;
   unsigned int buffer_strlen;
 
   char *user;
   char buffer[2*BUFFER_SIZE];
-    
+
   FILE *stamp_fid;
-  
+
   assert(config);
   assert(x_mean_final);
   assert(x_mean_final->n == config->T);
@@ -802,7 +803,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
     LENKF_DEBUG_FID = fopen(buffer, "w");
     assert(LENKF_DEBUG_FID);
   }
-  
+
   user = getenv("USER");
   assert(user);
 
@@ -811,9 +812,9 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
 
   stamp_fid = fopen(buffer, "w");
   assert(stamp_fid);
-  
+
   gettimeofday(&start_time, NULL);
-  
+
   if (config->enable_profiling) {
     ENABLE_PROFILING = True;
     N_CLOCKS = 13;
@@ -836,7 +837,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
     multi_sw_set_name(SW_MU_TU, 0, "MU");
     multi_sw_set_name(SW_MU_TU, 1, "TU");
   }
-  
+
   /* The final step of arg_bundle_create is arg_bundle_check.  The
      constructed arg_bundle should be consistent - i.e., all data
      structures will have the correct dimensions. */
@@ -854,26 +855,26 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
     build_filename(buffer, BUFFER_SIZE, config, "X_prior", 0);
     ensemble_export(buffer, ab->e);
   }
-  
+
   if (LENKF_DEBUG) {
     fputs("Initial ensemble:\n", LENKF_DEBUG_FID);
     ensemble_fprintf(LENKF_DEBUG_FID, ab->e);
   }
 
   buffer_strlen = 0;
-  
+
   for (i = 0; i < config->T; i++) {
     time(&current_time_time_t);
     fprintf(stamp_fid, "i = %d  (I = %d)  \t%s", i, config->T, ctime(&current_time_time_t));
     fflush(stamp_fid);
-    
+
     if (!config->quiet_mode && config->T > 1) {
       printf_time_info(&start_time, &buffer_strlen, i, config->T, stamp_fid);
     }
 
     /* MEASUREMENT UPDATE */
     arg_bundle_time_step(ab, i);
-    
+
     for (row = 0; row < config->M; row += config->M_block) {
       if (row + config->M_block > config->M) {
 	n_rows = config->M - row;
@@ -899,7 +900,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
 				   &(ab->y->v[row]), 1,
 				   R_sqrt_i->v, 1,
 				   n_rows);
-	
+
 	vector_destroy(&R_sqrt_i);
       }
       else {
@@ -910,7 +911,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
       }
     }
 
-    
+
     if (config->regularize) {
       for (row = 0; row < ab->D->m; row += config->M_block) {
 	if (row + config->M_block > ab->D->m) {
@@ -919,7 +920,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
 	else {
 	  n_rows = config->M_block;
 	}
-	
+
 	compute_measurement_update(ab, i, ab->D, row, 'D',
 				   &zero, 0, &inv_sqrt_lambda, 0,
 				   n_rows);
@@ -940,7 +941,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
 
     /* TIME UPDATE */
     compute_time_update(ab);
-    
+
     if (config->save_intermediate) {
       build_filename(buffer, BUFFER_SIZE, config, "x_hat_prior", i+1);
       vector_export(buffer, ab->x_mean);
@@ -954,7 +955,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
   if (config->save_trace) {
     vector_export(config->trace_filename, ab->trace);
   }
-  
+
   /* CLEANUP */
   arg_bundle_destroy(&ab);
 
@@ -974,7 +975,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
     multi_sw_destroy(&SW);
     multi_sw_destroy(&SW_MU_TU);
   }
-  
+
   gettimeofday(&current_time, NULL);
   stats->exec_time = time_elapsed(&start_time, &current_time);
 
@@ -983,6 +984,6 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
   if (LENKF_DEBUG) {
     fclose(LENKF_DEBUG_FID);
   }
-  
+
   return;
 }
