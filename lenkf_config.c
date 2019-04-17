@@ -26,7 +26,7 @@ lenkf_config *lenkf_config_init(void) {
   config->x0_filename = NULL;
   config->PI_sqrt_filename = NULL;
   config->alpha_PI_sqrt = 1;
-  
+
   config->y_list_filename = NULL;
   config->H_list_filename = NULL;
   config->R_sqrt_list_filename = NULL;
@@ -34,18 +34,18 @@ lenkf_config *lenkf_config_init(void) {
   config->y_filename_list = NULL;
   config->H_filename_list = NULL;
   config->R_sqrt_filename_list = NULL;
-  
+
   config->D_filename = NULL;
   config->lambda = 0;
-  
+
   config->C_filename = NULL;
-  
+
   config->F_filename = NULL;
   config->Q_sqrt_filename = NULL;
-  
+
   config->rank = 0;
   config->n = NULL;
-  
+
   config->N = 0;
   config->M = 0;
   config->M_block = 0;
@@ -53,28 +53,28 @@ lenkf_config *lenkf_config_init(void) {
   config->L = 0;
 
   config->seed = -1;
-  
+
   config->update_epsilon = 0;
 
   config->poisson_noise = False;
   config->poisson_eps = 1;
-  
+
   config->regularize = False;
   config->F_equal_I = False;
   config->randn_conv = False;
-  
+
   config->quiet_mode = False;
   config->save_trace = False;
   config->save_intermediate = False;
   config->enable_profiling = False;
   config->lenkf_debug = False;
-  
+
   return config;
 }
 
 void lenkf_config_destroy(lenkf_config **config) {
   int i;
-  
+
   assert(config);
   assert(*config);
 
@@ -82,21 +82,21 @@ void lenkf_config_destroy(lenkf_config **config) {
 
   free((*config)->x_hat_filename);
   free((*config)->trace_filename);
-  
+
   free((*config)->y_list_filename);
   free((*config)->H_list_filename);
   free((*config)->R_sqrt_list_filename);
-  
+
   for (i=0; i < (*config)->T; i++) {
     free((*config)->y_filename_list[i]);
     free((*config)->H_filename_list[i]);
     free((*config)->R_sqrt_filename_list[i]);
   }
-  
+
   free((*config)->y_filename_list);
   free((*config)->H_filename_list);
   free((*config)->R_sqrt_filename_list);
-  
+
   free((*config)->D_filename);
   free((*config)->C_filename);
 
@@ -108,12 +108,12 @@ void lenkf_config_destroy(lenkf_config **config) {
   else {
     free((*config)->F_filename);
   }
-  
+
   free((*config)->Q_sqrt_filename);
 
   free((*config)->x0_filename);
   free((*config)->PI_sqrt_filename);
-  
+
   free(*config);
   *config = NULL;
 }
@@ -121,7 +121,7 @@ void lenkf_config_destroy(lenkf_config **config) {
 
 void lenkf_config_check(cfg_t *cfg, const lenkf_config *config) {
   int i, N;
-  
+
   assert(cfg);
   assert(config);
 
@@ -133,45 +133,45 @@ void lenkf_config_check(cfg_t *cfg, const lenkf_config *config) {
   assert(config->x0_filename);
   assert(config->PI_sqrt_filename);
   assert(config->alpha_PI_sqrt > 0);
-  
-  assert(config->y_list_filename != NULL);
-  assert(config->H_list_filename != NULL);
-  assert(config->R_sqrt_list_filename != NULL);
-  
-  assert(config->y_filename_list != NULL);
-  assert(config->H_filename_list != NULL);
-  assert(config->R_sqrt_filename_list != NULL);
+
+  assert(config->y_list_filename[0] != '\0');
+  assert(config->H_list_filename[0] != '\0');
+  assert(config->R_sqrt_list_filename[0] != '\0');
+
+  assert(config->y_filename_list);
+  assert(config->H_filename_list);
+  assert(config->R_sqrt_filename_list);
   assert(config->D_filename);
   assert(config->C_filename);
 
   assert((config->F_filename == NULL) == config->F_equal_I);
   assert(config->Q_sqrt_filename);
-  
+
   assert(config->rank > 0);
-  
+
   N = 1;
   for (i = 0; i < config->rank; i++) {
     N *= config->n[i];
   }
 
   assert(config->N == N);
-  
+
   assert(config->N > 0);
   assert(config->M_block > 0 && config->M_block <= config->N);
   assert(config->T >= 0);
   assert(config->L > 0);
 
   assert(config->seed == -1 || config->seed >= 1);
-  
+
   assert(config->update_epsilon >= 0);
-  
+
   if (config->regularize) {
     assert(config->lambda >= 0);
   }
   else {
     assert(config->lambda == 0);
   }
-  
+
   if (config->poisson_noise) {
     assert(config->poisson_eps >= 0);
   }
@@ -183,7 +183,7 @@ void lenkf_config_check(cfg_t *cfg, const lenkf_config *config) {
 
 void lenkf_config_get_options(cfg_t *cfg, lenkf_config *config) {
   int i;
-  
+
   assert(cfg);
   assert(config);
 
@@ -208,14 +208,14 @@ void lenkf_config_get_options(cfg_t *cfg, lenkf_config *config) {
   config->L = cfg_getint(cfg, "L");
 
   config->seed = cfg_getint(cfg, "seed");
-  
+
   config->update_epsilon = cfg_getfloat(cfg, "update_epsilon");
-    
+
   config->lambda = cfg_getfloat(cfg, "lambda");
 
   config->poisson_noise = cfg_getbool(cfg, "poisson_noise");
   config->poisson_eps = cfg_getfloat(cfg, "poisson_eps");
-    
+
   config->regularize = cfg_getbool(cfg, "regularize");
   config->F_equal_I = cfg_getbool(cfg, "F_equal_I");
   config->randn_conv = cfg_getbool(cfg, "randn_conv");
@@ -234,15 +234,15 @@ void lenkf_config_get_options(cfg_t *cfg, lenkf_config *config) {
   config->x0_filename = strdup(cfg_getstr(cfg, "x0_filename"));
   config->PI_sqrt_filename = strdup(cfg_getstr(cfg, "PI_sqrt_filename"));
   config->alpha_PI_sqrt = cfg_getfloat(cfg, "alpha_PI_sqrt");
-  
+
   config->y_list_filename = strdup(cfg_getstr(cfg, "y_list_filename"));
   config->H_list_filename = strdup(cfg_getstr(cfg, "H_list_filename"));
   config->R_sqrt_list_filename = strdup(cfg_getstr(cfg, "R_sqrt_list_filename"));
-  
+
   config->y_filename_list = load_file_list(config->y_list_filename, config->T);
   config->H_filename_list = load_file_list(config->H_list_filename, config->T);
   config->R_sqrt_filename_list = load_file_list(config->R_sqrt_list_filename, config->T);
-  
+
   config->C_filename = strdup(cfg_getstr(cfg, "C_filename"));
   config->D_filename = strdup(cfg_getstr(cfg, "D_filename"));
 
@@ -250,7 +250,7 @@ void lenkf_config_get_options(cfg_t *cfg, lenkf_config *config) {
     config->F_filename = strdup(cfg_getstr(cfg, "F_filename"));
   }
   config->Q_sqrt_filename = strdup(cfg_getstr(cfg, "Q_sqrt_filename"));
-  
+
   RANDN_DEBUG = cfg_getbool(cfg, "randn_debug");
   if (RANDN_DEBUG) {
     randn_set_dir(config->dir);
@@ -266,28 +266,30 @@ static char **load_file_list(const char *file_list_filename, int T) {
   int i;
   char *result;
   int result_strlen;
-  
+
   assert(file_list_filename);
   assert(T >= 0);
 
   file_list = malloc(T * sizeof(char *));
   assert(file_list);
 
-  fid = fopen(file_list_filename, "r");
-  assert(fid);
+  if (file_list_filename[0] != '\0') {
+      fid = fopen(file_list_filename, "r");
+      assert(fid);
 
-  for (i = 0; i < T; i++) {
-    result = fgets(buffer, BUFFER_SIZE, fid);
-    assert(result);
+      for (i = 0; i < T; i++) {
+          result = fgets(buffer, BUFFER_SIZE, fid);
+          assert(result);
 
-    file_list[i] = strdup(result);
-    
-    result_strlen = strlen(result);
-    assert(file_list[i][result_strlen - 1] == '\n');
-    file_list[i][result_strlen - 1] = '\0';
+          file_list[i] = strdup(result);
+
+          result_strlen = strlen(result);
+          assert(file_list[i][result_strlen - 1] == '\n');
+          file_list[i][result_strlen - 1] = '\0';
+      }
+
+      fclose(fid);
   }
-  
-  fclose(fid);
 
   return file_list;
 }
