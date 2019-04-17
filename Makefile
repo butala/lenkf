@@ -68,7 +68,8 @@ endif
 ################################################################################
 
 
-BIN = lenkf ensemble_test randn_test blas_test randn_conv_test_new convmtx
+BIN = lenkf ensemble_test randn_test blas_test randn_conv_test_new convmtx \
+      compute_P_HT
 
 
 all: $(BIN) TAGS
@@ -85,6 +86,9 @@ lenkf: lenkf.o lenkf_main.o ensemble.o randn.o util.o \
 blas_test: blas_test.o randn.o util.o
 
 convmtx: convmtx.o
+
+compute_P_HT: compute_P_HT.o randn.o ensemble.o lenkf.o \
+              arg_bundle.o edot_table.o util.o
 
 
 TAGS: *.[ch]
