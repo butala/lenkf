@@ -30,9 +30,15 @@ static boolean ENABLE_PROFILING = False;
 
 /******************************************************************************/
 
+/*
 static void compute_P_HT(arg_bundle *ab, const sparse_rcs *H,
 			 const int row_H, const char name_H,
 			 const int n_rows);
+*/
+
+void compute_P_HT(arg_bundle *ab, const sparse_rcs *H,
+                  const int row_H, const char name_H,
+                  const int n_rows);
 
 static void compute_H_P_HT(arg_bundle *ab, const sparse_rcs *H,
 			   const int row_H, const char name_H,
@@ -106,9 +112,14 @@ static void TOC_MU_TU(const int clock_index);
 
 /* See Algorithm 1.2.3 in Golub and van Loan 3rd and 4th editions:
  * Symmetric storage Gaxpy */
+/*
 static void compute_P_HT(arg_bundle *ab, const sparse_rcs *H,
 			 const int row_H, const char name_H,
 			 const int n_rows) {
+*/
+void compute_P_HT(arg_bundle *ab, const sparse_rcs *H,
+                  const int row_H, const char name_H,
+                  const int n_rows) {
   int i, j_index, j;
   elem edot_ij, C_v;
   edot_table *table;
