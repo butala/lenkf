@@ -124,7 +124,9 @@ if __name__ == '__main__':
     export_rcs(H_fname, H)
 
     #row0 = np.ones((N, ))
-    row0 = np.hstack((np.arange(50, 0, -1), np.zeros((50,))))
+    assert N % 2 == 0
+    N2 = int(N/2)
+    row0 = np.hstack((np.arange(N2, 0, -1), np.zeros((N2,))))
     blocks = row0
     export_sb_toe_r(C_fname, blocks)
 
