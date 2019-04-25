@@ -3,7 +3,7 @@ CC = gcc
 UNAME := $(shell uname)
 MACHINE := $(shell uname -m)
 
-LIBS = -lm -llapack -lgsl -lconfuse
+LIBS = -lm -lgsl -lconfuse
 
 ifeq ($(UNAME),Linux)
    PATH_MDB_MATRIX = $(HOME)/src/libmdb_matrix
