@@ -7,9 +7,6 @@
 #define SQR(x) ((x)*(x))
 #define SGN(x) ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0))
 
-#define PTR_XOR(x, y) (void *)(((int)(x)) ^ ((int)(y)))
-
-
 int int_cmp(const void *v1, const void *v2);
 
 
