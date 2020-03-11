@@ -6,7 +6,7 @@
 #include "randn.h"
 
 
-extern boolean RANDN_DEBUG;
+extern cfg_bool_t RANDN_DEBUG;
 
 
 static char **load_file_list(const char *file_list_filename, int T);
@@ -56,18 +56,18 @@ lenkf_config *lenkf_config_init(void) {
 
   config->update_epsilon = 0;
 
-  config->poisson_noise = False;
+  config->poisson_noise = cfg_false;
   config->poisson_eps = 1;
 
-  config->regularize = False;
-  config->F_equal_I = False;
-  config->randn_conv = False;
+  config->regularize = cfg_false;
+  config->F_equal_I = cfg_false;
+  config->randn_conv = cfg_false;
 
-  config->quiet_mode = False;
-  config->save_trace = False;
-  config->save_intermediate = False;
-  config->enable_profiling = False;
-  config->lenkf_debug = False;
+  config->quiet_mode = cfg_false;
+  config->save_trace = cfg_false;
+  config->save_intermediate = cfg_false;
+  config->enable_profiling = cfg_false;
+  config->lenkf_debug = cfg_false;
 
   return config;
 }

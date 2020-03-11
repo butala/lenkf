@@ -24,17 +24,17 @@ static void usage(char *arg0) {
 void parse_config_file(char *config_file, lenkf_config *config) {
   cfg_t *cfg;
   int r;
-  
+
   assert(config_file);
   assert(config);
   assert(cfg_true == True && cfg_false == False);
 
-  
+
   cfg = cfg_init(lenkf_config_opts, CFGF_NONE);
 
   r = cfg_parse(cfg, config_file);
   assert(r == CFG_SUCCESS);
-  
+
   lenkf_config_get_options(cfg, config);
   lenkf_config_check(cfg, config);
 
@@ -45,7 +45,7 @@ lenkf_config *process_args_and_config_file(int argc, char **argv) {
   boolean verbose_flag, profile_flag;
   lenkf_config *config;
   char *config_filename;
-  
+
   int opt;
   char optstring[] = "hvp";
 
@@ -79,13 +79,13 @@ lenkf_config *process_args_and_config_file(int argc, char **argv) {
   else {
     config_filename = argv[optind+0];
   }
-  
+
   config = lenkf_config_init();
   parse_config_file(config_filename, config);
 
   config->quiet_mode &= !verbose_flag;
-  if (profile_flag) config->enable_profiling = True;
-  
+  if (profile_flag) config->enable_profiling = cfg_true;
+
   return config;
 }
 
@@ -98,20 +98,20 @@ int main(int argc, char **argv) {
 
 
   config = process_args_and_config_file(argc, argv);
-  
+
   randn_init();
   if (config->seed >= 1) {
     randn_seed(config->seed);
   }
-  
+
   x_mean_final = full_c_create(config->N, config->T);
-  
+
   lenkf(x_mean_final, config, &stats);
 
   if (!config->save_intermediate) {
     full_c_export(config->x_hat_filename, x_mean_final);
   }
-  
+
   full_c_destroy(&x_mean_final);
   randn_exit();
 
@@ -122,10 +122,8 @@ int main(int argc, char **argv) {
     printf("\n");
     printf("Res: %.1f Mb\n", stats.res);
   }
-  
+
   lenkf_config_destroy(&config);
 
   return EXIT_SUCCESS;
 }
-
-

@@ -16,7 +16,7 @@
 
 /******************************************************************************/
 
-static boolean LENKF_DEBUG;
+static cfg_bool_t LENKF_DEBUG;
 static FILE *LENKF_DEBUG_FID;
 
 #define BUFFER_SIZE 256
@@ -25,7 +25,7 @@ static multi_sw *SW;
 static multi_sw *SW_MU_TU;
 
 static int N_CLOCKS = 0;
-static boolean ENABLE_PROFILING = False;
+static cfg_bool_t ENABLE_PROFILING = cfg_false;
 
 
 /******************************************************************************/
@@ -827,7 +827,7 @@ void lenkf(full_c *x_mean_final, lenkf_config *config,
   gettimeofday(&start_time, NULL);
 
   if (config->enable_profiling) {
-    ENABLE_PROFILING = True;
+    ENABLE_PROFILING = cfg_true;
     N_CLOCKS = 13;
     SW = multi_sw_create(N_CLOCKS);
     multi_sw_set_name(SW, 0,  "Init");

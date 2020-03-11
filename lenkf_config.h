@@ -16,51 +16,51 @@
 
 typedef struct {
   char *dir;
-  
+
   int rank;
   int *n;
-  
+
   int N, M, M_block, T, L;
 
   long int seed;
-  
+
   char *x_hat_filename;
   char *trace_filename;
 
   char *x0_filename;
   char *PI_sqrt_filename;
   elem alpha_PI_sqrt;
-  
+
   char *y_list_filename;
   char *H_list_filename;
   char *R_sqrt_list_filename;
-  
+
   char **y_filename_list;
   char **H_filename_list;
   char **R_sqrt_filename_list;
-  
+
   char *D_filename;
   elem lambda;
-  
+
   char *C_filename;
 
   char *F_filename;
   char *Q_sqrt_filename;
-  
+
   elem update_epsilon;
 
-  boolean poisson_noise;
+  cfg_bool_t poisson_noise;
   elem poisson_eps;
-  
-  boolean regularize;
-  boolean F_equal_I;
-  boolean randn_conv;
 
-  boolean quiet_mode;
-  boolean save_trace;
-  boolean save_intermediate;
-  boolean enable_profiling;
-  boolean lenkf_debug;
+  cfg_bool_t regularize;
+  cfg_bool_t F_equal_I;
+  cfg_bool_t randn_conv;
+
+  cfg_bool_t quiet_mode;
+  cfg_bool_t save_trace;
+  cfg_bool_t save_intermediate;
+  cfg_bool_t enable_profiling;
+  cfg_bool_t lenkf_debug;
 } lenkf_config;
 
 lenkf_config *lenkf_config_init(void);
