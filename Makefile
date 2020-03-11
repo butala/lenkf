@@ -5,9 +5,11 @@ MACHINE := $(shell uname -m)
 
 LIBS = -lm -lgsl -lconfuse
 
+PATH_MDB_MATRIX = $(HOME)/src/libmdb_matrix
+
+
 ifeq ($(UNAME),Linux)
-   PATH_MDB_MATRIX = $(HOME)/src/libmdb_matrix
-#DEFINES = -DATLAS -DLINUX
+   #DEFINES = -DATLAS -DLINUX
    DEFINES = -DLINUX -DOPENBLAS
    LDFLAGS = -Wl,-rpath,$(PATH_MDB_MATRIX)
 
@@ -26,12 +28,13 @@ ifeq ($(UNAME),Linux)
       $(error Unknown machine type $(MACHINE))
    endif
 else ifeq ($(UNAME),Darwin)
-   PATH_MDB_MATRIX = $(HOME)/src/uiuc/libmdb_matrix
-   DEFINES = -DVECLIB -DOSX
-   INCLUDE_DIR = -I$(PATH_MDB_MATRIX)
+   DEFINES = -DOSX -DLONG_PTR -DVECLIB
+   LIBS += -lc -framework Accelerate
+   INCLUDE_DIR += -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers
+   INCLUDE_DIR += -I$(PATH_MDB_MATRIX)
    LDFLAGS = -L$(PATH_MDB_MATRIX)
 else
-$(error $(UNAME) not supported!)
+   $(error $(UNAME) not supported!)
 endif
 
 ELEM = double
