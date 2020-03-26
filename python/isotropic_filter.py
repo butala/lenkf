@@ -1,11 +1,129 @@
 import numpy as np
 import scipy as sp
 import scipy.linalg
+import scipy.sparse
 import matplotlib.pylab as plt
 
 import libmdb_matrix
-import pyrsss.signal.convmtx as convmtx
-from pyrsss.signal.util import zero_pad
+
+
+class Convmtx(sp.sparse.coo_matrix):
+    def __new__(cls, n, H, mode='full'):
+        """
+        Construct sparse convolution matrix to operate on vector of
+        dimension *n* with the kernel *H*. The *mode* parameter can be
+        one of:
+
+        - full: standard convolution, i.e., zero-padding at the edges.
+
+        - valid: convolution where only those portions of complete
+          overlap, i.e., no zero-padding, are considered.
+
+        - circ: circular convolution, i.e., periodic boundary
+          condition at the edges.
+        """
+        def toeplitz_mapper_full(h):
+            if (h == 0).all():
+                return sp.sparse.coo_matrix((k[-1], n[-1]))
+            else:
+                c = h
+                r = np.array([c[0]] + [0]*(n[-1]-1))
+                return sp.sparse.coo_matrix(scipy.linalg.toeplitz(c, r))
+
+        def toeplitz_mapper_valid(h):
+            if (h == 0).all():
+                return sp.sparse.coo_matrix((k[-1], n[-1]))
+            else:
+                r = np.zeros(n[-1])
+                r[:len(h)] = h
+                c = np.zeros(k[-1])
+                c[0] = r[0]
+                return sp.sparse.coo_matrix(scipy.linalg.toeplitz(c, r))
+
+        def toeplitz_mapper_circ(h):
+            if (h == 0).all():
+                return sp.sparse.coo_matrix((k[-1], n[-1]))
+            else:
+                c = h
+                r = np.zeros(n[-1])
+                r[0] = c[0]
+                r[1:] = h[:0:-1]
+                return sp.sparse.coo_matrix(scipy.linalg.toeplitz(c, r))
+
+        def block_mapper_full(n, k, blocks):
+            c = [blocks[i] for i in range(k)]
+            r = [c[0]] + [None]*(n-1)
+            return sp.sparse.bmat(sp.linalg.toeplitz(c, r).tolist(), format='coo')
+
+        def block_mapper_valid(n, k, blocks):
+            r = []
+            for i in range(n):
+                if (n - k - i < 0):
+                    r.append(None)
+                else:
+                    r.append(blocks[n - k - i])
+
+            c = []
+            for i in range(n-k, n):
+                c.append(blocks[i])
+
+            return sp.sparse.bmat(sp.linalg.toeplitz(c, r).tolist(), format='coo')
+
+        def block_mapper_circ(n, k, blocks):
+            c = [blocks[i] for i in range(k)]
+            r = []
+            r.append(blocks[0])
+            r.extend(blocks[:0:-1])
+            return sp.sparse.bmat(sp.linalg.toeplitz(c, r).tolist(), format='coo')
+
+        m = H.shape
+
+        if mode == 'full':
+            k = tuple(np.array(n) + np.array(m) - 1)
+            toeplitz_mapper = toeplitz_mapper_full
+            block_mapper = block_mapper_full
+
+            H_zp = zero_pad(H, k)
+            c_list = np.split(H_zp.flatten(), np.prod(k[:-1]))
+        elif mode == 'valid':
+            k = tuple(np.array(n) - np.array(m) + 1)
+            toeplitz_mapper = toeplitz_mapper_valid
+            block_mapper = block_mapper_valid
+
+            H_zp = zero_pad(H[...,::-1], n)
+            c_list = np.split(H_zp.flatten(), np.prod(n[:-1]))
+        elif mode == 'circ':
+            assert((np.array(m) <= np.array(n)).all())
+            k = n
+            toeplitz_mapper = toeplitz_mapper_circ
+            block_mapper = block_mapper_circ
+
+            H_zp = zero_pad(H, k)
+            c_list = np.split(H_zp.flatten(), np.prod(k[:-1]))
+        else:
+            raise ValueError('Unknown mode {0}'.format(mode))
+
+        blocks = [toeplitz_mapper(x) for x in c_list]
+
+        for n_i, k_i in zip(n[-2::-1], k[-2::-1]):
+            if mode == 'full' or mode == 'circ':
+                blocks = [block_mapper(n_i, k_i, x) for x in np.split(np.array(blocks), len(blocks)/k_i)]
+            elif mode =='valid':
+                blocks = [block_mapper(n_i, k_i, x) for x in np.split(np.array(blocks), len(blocks)/n_i)]
+            else:
+                raise ValueError('Unknown mode {0}'.format(mode))
+
+        return blocks[0]
+
+
+def zero_pad(x, n):
+    """
+    Return *x* zero padded to the dimensions specified in *n*.
+    """
+    assert len(n) == x.ndim
+    return np.pad(x,
+                  [(0, n_i - s_i) for n_i, s_i in zip(n, x.shape)],
+                  'constant')
 
 
 class ShapeFilter:
@@ -21,7 +139,7 @@ class ShapeFilter:
 
 
     def asmatrix(self):
-        return convmtx.Convmtx(self.n, self.h)
+        return Convmtx(self.n, self.h)
 
 
 class IsotropicFilter:
