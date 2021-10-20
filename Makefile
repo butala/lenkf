@@ -1,40 +1,39 @@
-CC = gcc
+CC = cc
+PKG_CONFIG = pkg-config
 
 UNAME := $(shell uname)
-MACHINE := $(shell uname -m)
-
-LIBS = -lm -lgsl -lconfuse
 
 PATH_MDB_MATRIX = $(HOME)/src/libmdb_matrix
 
+# BLAS = veclib
+BLAS = openblas
+
+INCLUDE_DIR += -I$(PATH_MDB_MATRIX)
+LDFLAGS += -L$(PATH_MDB_MATRIX)
+
+LIBS += -lm -lgsl -lconfuse
+
+ifeq ($(BLAS),openblas)
+   DEFINES += -DOPENBLAS
+   LDFLAGS += -Wl,-rpath,$(PATH_MDB_MATRIX)
+
+   INCLUDE_DIR += $(shell $(PKG_CONFIG) --cflags openblas)
+   LIBS += $(shell $(PKG_CONFIG) --libs openblas)
+else ifeq ($(BLAS),veclib)
+   DEFINES += -DVECLIB
+   LIBS += -framework Accelerate
+   INCLUDE_DIR += -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers
+else
+   $(error $(BLAS) not supported!)
+endif
+
 
 ifeq ($(UNAME),Linux)
-   #DEFINES = -DATLAS -DLINUX
-   DEFINES = -DLINUX -DOPENBLAS
-   LDFLAGS = -Wl,-rpath,$(PATH_MDB_MATRIX)
-
-   ifeq ($(MACHINE),x86_64)
-      INCLUDE_DIR = -I$(PATH_MDB_MATRIX) #-I/usr/local/atlas/include
-      LDFLAGS += -L$(PATH_MDB_MATRIX) #-L/usr/local/atlas/lib
-      #LIBS += -latlas -lptf77blas -lptcblas
-      LIBS += -lopenblas
-   else ifeq ($(MACHINE),i686)
-      LDFLAGS += -L/usr/lib/sse2 -L/usr/lib/sse2/atlas
-      LIBS += -latlas -lf77blas -lcblas
-   else ifeq ($(MACHINE),ppc)
-      LDFLAGS += -L$(PATH_MDB_MATRIX) -L/usr/lib/altivec -Wl,-rpath,/usr/lib/altivec
-      LIBS += -latlas -lf77blas -lcblas
-   else
-      $(error Unknown machine type $(MACHINE))
-   endif
+   DEFINES += -DLINUX
 else ifeq ($(UNAME),Darwin)
-   DEFINES = -DOSX -DLONG_PTR -DVECLIB
-   LIBS += -lc -framework Accelerate
-   INCLUDE_DIR += -I/usr/local/include -I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Headers
-   INCLUDE_DIR += -I$(PATH_MDB_MATRIX)
-   LDFLAGS = -L$(PATH_MDB_MATRIX)
+   DEFINES += -DOSX
 else
-   $(error $(UNAME) not supported!)
+$(error $(UNAME) not supported!)
 endif
 
 ELEM = double
@@ -75,7 +74,7 @@ BIN = lenkf ensemble_test randn_test blas_test randn_conv_test_new convmtx \
       compute_P_HT
 
 
-all: $(BIN) TAGS
+all: $(BIN)
 
 ensemble_test: ensemble.o ensemble_test.o randn.o util.o
 
@@ -93,13 +92,6 @@ convmtx: convmtx.o
 compute_P_HT: compute_P_HT.o randn.o ensemble.o lenkf.o \
               arg_bundle.o edot_table.o util.o
 
-
-TAGS: *.[ch]
-	etags -a /home/butala/src/libmdb_matrix/TAGS *.[ch]
-
-
-indent:
-	$(INDENT) $(INDENT_FLAGS) *.c *.h
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) $(DEFINES) $< -o $@
@@ -126,4 +118,4 @@ include $(DEPEND)
 
 
 clean:
-	rm -f *.o *.d $(BIN) TAGS
+	rm -f *.o *.d $(BIN)
