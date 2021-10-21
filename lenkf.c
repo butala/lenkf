@@ -340,7 +340,7 @@ static void compute_chol_B(arg_bundle *ab, const int n_rows) {
 
   assert(n_rows <= B->n);
 
-  r = epotrf(CblasColMajor, CblasUpper, n_rows, B->v_vector, B->n);
+  r = epotrf(CblasColMajor, 'U', n_rows, B->v_vector, B->n);
   assert(r == 0);
 
   if (LENKF_DEBUG) {
@@ -362,7 +362,7 @@ static void compute_B_rdiv_E(arg_bundle *ab, const int n_rows) {
 
   assert(n_rows <= B->n);
 
-  r = epotrs(CblasColMajor, CblasUpper, n_rows, E->n,
+  r = epotrs(CblasColMajor, 'U', n_rows, E->n,
 	     B->v_vector, B->m, E->v_vector, E->m);
   assert(r == 0);
 
@@ -422,7 +422,7 @@ static void compute_B_rdiv_e(arg_bundle *ab, const int n_rows) {
 
   TIC(10);
 
-  r = epotrs(CblasColMajor, CblasUpper, n_rows, 1, B->v_vector,
+  r = epotrs(CblasColMajor, 'U', n_rows, 1, B->v_vector,
 	     B->n, e, n_rows);
 
   assert(r == 0);
