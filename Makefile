@@ -13,6 +13,8 @@ LDFLAGS += -L$(PATH_MDB_MATRIX)
 
 LIBS += -lm -lgsl -lconfuse
 
+# export PKG_CONFIG_PATH="/usr/local/opt/openblas/lib/pkgconfig"
+
 ifeq ($(BLAS),openblas)
    DEFINES += -DOPENBLAS
    LDFLAGS += -Wl,-rpath,$(PATH_MDB_MATRIX)
