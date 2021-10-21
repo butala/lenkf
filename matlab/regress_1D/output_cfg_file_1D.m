@@ -13,10 +13,6 @@ else
   fprintf(fid, 'save_trace = false\n');
 end
 
-fprintf(fid, 'suffix = %s\n', cfg.suffix);
-
-fprintf(fid, 'suffix_filename = %s\n', cfg.suffix_filename);
-
 fprintf(fid, 'rank = %d\n', cfg.rank);
 fprintf(fid, 'n = {');
 for i = 1:cfg.rank-1
@@ -53,19 +49,19 @@ else
 end
 
 if (cfg.lenkf_debug)
-  fprintf(fid, 'lenkf_debug = true');
+  fprintf(fid, 'lenkf_debug = true\n');
 else
-  fprintf(fid, 'lenkf_debug = false');
+  fprintf(fid, 'lenkf_debug = false\n');
 end
 
-fclose(fid);
+fprintf(fid, 'x0_filename = %s\n', cfg.x0_filename);
+fprintf(fid, 'PI_sqrt_filename = %s\n', cfg.PI_sqrt_filename);
+fprintf(fid, 'D_filename = %s\n', cfg.D_filename);
+fprintf(fid, 'Q_sqrt_filename = %s\n', cfg.Q_sqrt_filename);
+fprintf(fid, 'C_filename = %s\n', cfg.C_filename);
 
-
-fid = fopen([cfg.dir_name, '/', cfg.suffix_filename], 'w');
-assert(fid ~= -1);
-
-for i=1:cfg.T
-    fprintf(fid, '%s_%d\n', cfg.suffix, i-1);
-end
+fprintf(fid, 'y_list_filename = %s\n', cfg.y_list_filename);
+fprintf(fid, 'H_list_filename = %s\n', cfg.H_list_filename);
+fprintf(fid, 'R_sqrt_list_filename = %s', cfg.R_sqrt_list_filename);
 
 fclose(fid);
