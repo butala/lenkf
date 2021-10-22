@@ -3,7 +3,6 @@
 addpath('../');
 
 cfg = struct();
-cfg.cfg_filename = '../tmp/H_regress_2D.cfg';
 cfg.dir_name = '../tmp';
 cfg.H_filename = 'H_regress_2D_unscaled';
 cfg.res = res;
@@ -11,13 +10,7 @@ cfg.na = na;
 cfg.np = np;
 cfg.d = d;
 
-output_H_cfg_file(cfg);
-
-cmd = sprintf('../../../../sysmatrix/sysmatrix %s', ...
-              cfg.cfg_filename);
-
-[s, w] = system(cmd);
-assert(s == 0);
+generate_H_matrix(cfg);
 
 H = import_rcs(sprintf('%s/%s', cfg.dir_name, cfg.H_filename));
 %s = svd(H);
@@ -41,7 +34,7 @@ for i=1:T
   H_I = H_index:H_index+np-1;
   y_true(:, i) = H(H_I, :) * x(:, i);
   H_row = H_row + 1;
-  
+
   if (H_row > size(H,1)/M)
     H_row = 1;
   end

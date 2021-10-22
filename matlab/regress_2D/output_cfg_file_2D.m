@@ -4,9 +4,6 @@ fid = fopen(cfg.cfg_filename, 'w');
 assert(fid ~= -1);
 
 fprintf(fid, 'dir = %s\n', cfg.dir_name);
-fprintf(fid, 'suffix = %s\n', cfg.suffix);
-
-fprintf(fid, 'suffix_filename = %s\n', cfg.suffix_filename);
 
 fprintf(fid, 'x_hat_filename = %s\n', cfg.x_hat_filename);
 if (cfg.save_trace)
@@ -60,16 +57,16 @@ else
   fprintf(fid, 'update_epsilon = %f\n', cfg.update_epsilon);
 end
 
-fprintf(fid, 'F_equal_I = true');
+fprintf(fid, 'F_equal_I = true\n');
 
-fclose(fid);
+fprintf(fid, 'x0_filename = %s\n', cfg.x0_filename);
+fprintf(fid, 'PI_sqrt_filename = %s\n', cfg.PI_sqrt_filename);
+fprintf(fid, 'D_filename = %s\n', cfg.D_filename);
+fprintf(fid, 'Q_sqrt_filename = %s\n', cfg.Q_sqrt_filename);
+fprintf(fid, 'C_filename = %s\n', cfg.C_filename);
 
-
-fid = fopen([cfg.dir_name, '/', cfg.suffix_filename], 'w');
-assert(fid ~= -1);
-
-for i=1:cfg.T
-    fprintf(fid, '%s_%d\n', cfg.suffix, i-1);
-end
+fprintf(fid, 'y_list_filename = %s\n', cfg.y_list_filename);
+fprintf(fid, 'H_list_filename = %s\n', cfg.H_list_filename);
+fprintf(fid, 'R_sqrt_list_filename = %s', cfg.R_sqrt_list_filename);
 
 fclose(fid);
